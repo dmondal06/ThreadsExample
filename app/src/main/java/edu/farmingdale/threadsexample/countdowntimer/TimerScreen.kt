@@ -42,6 +42,7 @@ import android.media.ToneGenerator
 import android.media.AudioManager
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 
 @Composable
 fun TimerScreen(
@@ -51,24 +52,27 @@ fun TimerScreen(
     val context = LocalContext.current
     var playSound by remember { mutableStateOf(false) }
 
-    // ToneGenerator for sound
+    //using tone generator for sound
     val toneGenerator = remember {
         ToneGenerator(AudioManager.STREAM_ALARM, 100)
     }
 
-    // Trigger sound when timer reaches 0
+    // this triggers sound when timer reaches 0
     LaunchedEffect(timerViewModel.remainingMillis) {
         if (timerViewModel.remainingMillis == 0L && playSound) {
             toneGenerator.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD, 500)
         }
     }
 
-    // Calculate progress
     val progress = if (timerViewModel.totalMillis > 0) {
         timerViewModel.remainingMillis / timerViewModel.totalMillis.toFloat()
     } else {
         0f
     }
+
+    val isLast10Seconds = timerViewModel.remainingMillis <= 10_000L
+    val timerTextColor = if (isLast10Seconds) Color.Red else Color.Black
+    val timerFontWeight = if (isLast10Seconds) FontWeight.Bold else FontWeight.Normal
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -79,7 +83,6 @@ fun TimerScreen(
                 .size(300.dp),
             contentAlignment = Alignment.Center
         ) {
-            // Background track
             CircularProgressIndicator(
                 progress = { 1f },
                 modifier = Modifier.size(300.dp),
@@ -87,7 +90,6 @@ fun TimerScreen(
                 strokeWidth = 12.dp
             )
 
-            // Animated progress
             CircularProgressIndicator(
                 progress = { progress },
                 modifier = Modifier.size(300.dp),
@@ -95,11 +97,11 @@ fun TimerScreen(
                 strokeWidth = 16.dp
             )
 
-            // Timer text
             Text(
                 text = timerText(timerViewModel.remainingMillis),
                 fontSize = 64.sp,
-                color = if (progress <= 0.1f) Color.Red else Color.Black
+                color = timerTextColor,
+                fontWeight = timerFontWeight
             )
         }
 
