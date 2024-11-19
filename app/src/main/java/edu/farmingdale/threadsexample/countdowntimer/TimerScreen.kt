@@ -9,7 +9,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
@@ -40,33 +43,72 @@ fun TimerScreen(
     modifier: Modifier = Modifier,
     timerViewModel: TimerViewModel = viewModel()
 ) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+    // Calculate progress based on remaining and total milliseconds
+    val progress = if (timerViewModel.totalMillis > 0) {
+        timerViewModel.remainingMillis / timerViewModel.totalMillis.toFloat()
+    } else {
+        0f
+    }
+
+    // Animated progress value
+    val animatedProgress by animateFloatAsState(
+        targetValue = progress,
+        animationSpec = tween(durationMillis = 500)
+    )
+
+    // Change color dynamically
+    val progressColor = if (progress <= 0.1f) Color.Red else Color(0xFF4CAF50)
+
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.fillMaxSize().padding(20.dp)
+    ) {
         Box(
-            modifier = modifier
-                .padding(20.dp)
-                .size(240.dp),
+            modifier = Modifier
+                .size(300.dp),
             contentAlignment = Alignment.Center
         ) {
-            if (timerViewModel.isRunning) {
+            // Background Circle
+            CircularProgressIndicator(
+                progress = 1f,
+                modifier = Modifier.size(300.dp),
+                color = Color.LightGray,
+                strokeWidth = 12.dp
+            )
 
-            }
+            // Animated Circular Progress
+            CircularProgressIndicator(
+                progress = animatedProgress,
+                modifier = Modifier.size(300.dp),
+                color = progressColor,
+                strokeWidth = 16.dp
+            )
+
+            // Timer text in the center
             Text(
                 text = timerText(timerViewModel.remainingMillis),
-                fontSize = 60.sp,
+                fontSize = 64.sp,
+                color = if (progress <= 0.1f) Color.Red else Color.Black
             )
         }
+
+        Spacer(modifier = Modifier.height(40.dp))
+
         TimePicker(
             hour = timerViewModel.selectedHour,
             min = timerViewModel.selectedMinute,
             sec = timerViewModel.selectedSecond,
             onTimePick = timerViewModel::selectTime
         )
+
+        Spacer(modifier = Modifier.height(20.dp))
+
         if (timerViewModel.isRunning) {
             Button(
                 onClick = timerViewModel::cancelTimer,
-                modifier = modifier.padding(50.dp)
+                modifier = modifier.padding(10.dp)
             ) {
-                Text("Cancel")
+                Text("Cancel Timer")
             }
         } else {
             Button(
@@ -74,14 +116,13 @@ fun TimerScreen(
                         timerViewModel.selectedMinute +
                         timerViewModel.selectedSecond > 0,
                 onClick = timerViewModel::startTimer,
-                modifier = modifier.padding(top = 50.dp)
+                modifier = modifier.padding(10.dp)
             ) {
-                Text("Start")
+                Text("Start Timer")
             }
         }
     }
 }
-
 
 
 fun timerText(timeInMillis: Long): String {

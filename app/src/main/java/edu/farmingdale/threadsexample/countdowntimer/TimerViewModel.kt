@@ -35,23 +35,22 @@ class TimerViewModel : ViewModel() {
         private set
 
     fun selectTime(hour: Int, min: Int, sec: Int) {
-        selectedHour = hour
-        selectedMinute = min
-        selectedSecond = sec
+        selectedHour = hour.coerceIn(0, 99)
+        selectedMinute = min.coerceIn(0, 59)
+        selectedSecond = sec.coerceIn(0, 59)
     }
 
     fun startTimer() {
         // Convert hours, minutes, and seconds to milliseconds
-        totalMillis = (selectedHour * 60 * 60 + selectedMinute * 60 + selectedSecond) * 1000L
+        totalMillis = ((selectedHour * 60 * 60L) + (selectedMinute * 60L) + selectedSecond) * 1000L
 
-        // Start coroutine that makes the timer count down
         if (totalMillis > 0) {
             isRunning = true
             remainingMillis = totalMillis
 
             timerJob = viewModelScope.launch {
                 while (remainingMillis > 0) {
-                    delay(1000)
+                    delay(1000) // Countdown decrements every second
                     remainingMillis -= 1000
                 }
 
