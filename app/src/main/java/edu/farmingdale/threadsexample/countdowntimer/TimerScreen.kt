@@ -38,12 +38,32 @@ import java.util.Locale
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
+import android.media.ToneGenerator
+import android.media.AudioManager
+import androidx.compose.runtime.*
+import androidx.compose.ui.platform.LocalContext
+
 @Composable
 fun TimerScreen(
     modifier: Modifier = Modifier,
     timerViewModel: TimerViewModel = viewModel()
 ) {
-    // Calculate progress based on remaining and total milliseconds
+    val context = LocalContext.current
+    var playSound by remember { mutableStateOf(false) }
+
+    // ToneGenerator for sound
+    val toneGenerator = remember {
+        ToneGenerator(AudioManager.STREAM_ALARM, 100)
+    }
+
+    // Trigger sound when timer reaches 0
+    LaunchedEffect(timerViewModel.remainingMillis) {
+        if (timerViewModel.remainingMillis == 0L && playSound) {
+            toneGenerator.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD, 500)
+        }
+    }
+
+    // Calculate progress
     val progress = if (timerViewModel.totalMillis > 0) {
         timerViewModel.remainingMillis / timerViewModel.totalMillis.toFloat()
     } else {
@@ -59,23 +79,23 @@ fun TimerScreen(
                 .size(300.dp),
             contentAlignment = Alignment.Center
         ) {
-            // Background Circle
+            // Background track
             CircularProgressIndicator(
-                progress = 1f,
+                progress = { 1f },
                 modifier = Modifier.size(300.dp),
                 color = Color.LightGray,
                 strokeWidth = 12.dp
             )
 
-            // Animated Circular Progress
+            // Animated progress
             CircularProgressIndicator(
-                progress = progress,
+                progress = { progress },
                 modifier = Modifier.size(300.dp),
                 color = if (progress <= 0.1f) Color.Red else Color(0xFF4CAF50),
                 strokeWidth = 16.dp
             )
 
-            // Timer text in the center
+            // Timer text
             Text(
                 text = timerText(timerViewModel.remainingMillis),
                 fontSize = 64.sp,
@@ -99,7 +119,10 @@ fun TimerScreen(
             modifier = Modifier.padding(10.dp)
         ) {
             if (timerViewModel.isRunning) {
-                Button(onClick = timerViewModel::cancelTimer) {
+                Button(onClick = {
+                    timerViewModel.cancelTimer()
+                    playSound = false
+                }) {
                     Text("Cancel Timer")
                 }
             } else {
@@ -107,14 +130,19 @@ fun TimerScreen(
                     enabled = timerViewModel.selectedHour +
                             timerViewModel.selectedMinute +
                             timerViewModel.selectedSecond > 0,
-                    onClick = timerViewModel::startTimer
+                    onClick = {
+                        timerViewModel.startTimer()
+                        playSound = true
+                    }
                 ) {
                     Text("Start Timer")
                 }
             }
 
-            // Reset Button
-            Button(onClick = timerViewModel::resetTimer) {
+            Button(onClick = {
+                timerViewModel.resetTimer()
+                playSound = false
+            }) {
                 Text("Reset Timer")
             }
         }
