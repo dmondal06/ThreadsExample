@@ -50,15 +50,6 @@ fun TimerScreen(
         0f
     }
 
-    // Animated progress value
-    val animatedProgress by animateFloatAsState(
-        targetValue = progress,
-        animationSpec = tween(durationMillis = 500)
-    )
-
-    // Change color dynamically
-    val progressColor = if (progress <= 0.1f) Color.Red else Color(0xFF4CAF50)
-
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.fillMaxSize().padding(20.dp)
@@ -78,9 +69,9 @@ fun TimerScreen(
 
             // Animated Circular Progress
             CircularProgressIndicator(
-                progress = animatedProgress,
+                progress = progress,
                 modifier = Modifier.size(300.dp),
-                color = progressColor,
+                color = if (progress <= 0.1f) Color.Red else Color(0xFF4CAF50),
                 strokeWidth = 16.dp
             )
 
@@ -103,26 +94,33 @@ fun TimerScreen(
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        if (timerViewModel.isRunning) {
-            Button(
-                onClick = timerViewModel::cancelTimer,
-                modifier = modifier.padding(10.dp)
-            ) {
-                Text("Cancel Timer")
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = Modifier.padding(10.dp)
+        ) {
+            if (timerViewModel.isRunning) {
+                Button(onClick = timerViewModel::cancelTimer) {
+                    Text("Cancel Timer")
+                }
+            } else {
+                Button(
+                    enabled = timerViewModel.selectedHour +
+                            timerViewModel.selectedMinute +
+                            timerViewModel.selectedSecond > 0,
+                    onClick = timerViewModel::startTimer
+                ) {
+                    Text("Start Timer")
+                }
             }
-        } else {
-            Button(
-                enabled = timerViewModel.selectedHour +
-                        timerViewModel.selectedMinute +
-                        timerViewModel.selectedSecond > 0,
-                onClick = timerViewModel::startTimer,
-                modifier = modifier.padding(10.dp)
-            ) {
-                Text("Start Timer")
+
+            // Reset Button
+            Button(onClick = timerViewModel::resetTimer) {
+                Text("Reset Timer")
             }
         }
     }
 }
+
 
 
 fun timerText(timeInMillis: Long): String {

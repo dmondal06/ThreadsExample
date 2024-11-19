@@ -34,41 +34,53 @@ class TimerViewModel : ViewModel() {
     var isRunning by mutableStateOf(false)
         private set
 
+    // Select time from picker
     fun selectTime(hour: Int, min: Int, sec: Int) {
-        selectedHour = hour.coerceIn(0, 99)
-        selectedMinute = min.coerceIn(0, 59)
-        selectedSecond = sec.coerceIn(0, 59)
+        selectedHour = hour.coerceIn(0, 99) // Limit hours to 0-99
+        selectedMinute = min.coerceIn(0, 59) // Limit minutes to 0-59
+        selectedSecond = sec.coerceIn(0, 59) // Limit seconds to 0-59
     }
 
+    // Start the timer
     fun startTimer() {
         // Convert hours, minutes, and seconds to milliseconds
-        totalMillis = ((selectedHour * 60 * 60L) + (selectedMinute * 60L) + selectedSecond) * 1000L
+        totalMillis = ((selectedHour * 3600L) + (selectedMinute * 60L) + selectedSecond) * 1000L
 
         if (totalMillis > 0) {
             isRunning = true
             remainingMillis = totalMillis
 
+            // Start coroutine for the countdown
             timerJob = viewModelScope.launch {
                 while (remainingMillis > 0) {
-                    delay(1000) // Countdown decrements every second
+                    delay(1000) // Wait 1 second
                     remainingMillis -= 1000
                 }
-
-                isRunning = false
+                isRunning = false // Timer completes
             }
         }
     }
 
+    // Cancel the timer
     fun cancelTimer() {
-        if (isRunning) {
-            timerJob?.cancel()
-            isRunning = false
-            remainingMillis = 0
-        }
+        timerJob?.cancel() // Stop the coroutine
+        isRunning = false
+        remainingMillis = 0L // Reset remaining time
+    }
+
+    // Reset the timer
+    fun resetTimer() {
+        timerJob?.cancel() // Stop any ongoing coroutine
+        isRunning = false
+        selectedHour = 0 // Reset selected values
+        selectedMinute = 0
+        selectedSecond = 0
+        totalMillis = 0L // Reset total milliseconds
+        remainingMillis = 0L // Reset remaining milliseconds
     }
 
     override fun onCleared() {
         super.onCleared()
-        timerJob?.cancel()
+        timerJob?.cancel() // Clean up coroutine when ViewModel is destroyed
     }
 }
